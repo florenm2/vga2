@@ -1,5 +1,11 @@
 module vga2practice(CLK_50, VGA_R, VGA_B, VGA_G, VGA_HS, VGA_VS, VGA_SYNC_N, VGA_BLANK_N, VGA_CLK, rst, jump, reset);
 	
+    //We spent the first week of the project trying to figure out how to get a picture on the screen.
+    //We looked at an Asteroid game made by MIT students to see how the screen worked. This helped
+    //us understand what to do.
+    //The V_SYNC and H_SYNC were the most confusing. Bailey helped us greatly with it and our code
+    //for these two modules models his. He also helped us trouble shoot when our screen was endlessly
+    //scrolling.
     output [7:0] VGA_R, VGA_B, VGA_G;
     output VGA_HS, VGA_VS, VGA_BLANK_N, VGA_CLK, VGA_SYNC_N;
     input CLK_50, rst, jump, reset;
@@ -8,7 +14,8 @@ module vga2practice(CLK_50, VGA_R, VGA_B, VGA_G, VGA_HS, VGA_VS, VGA_SYNC_N, VGA
     clock108(rst, CLK_50, CLK_108, locked);
 
     wire hblank, vblank, clkLine, blank;
-
+    
+    //H_SYNC and V_SYNC make sure that the vertical and horizontal aspects are updating at the same rate
     H_SYNC(CLK_108, VGA_HS, hblank, clkLine);
     V_SYNC(clkLine, VGA_VS, vblank);
 	 // We had to add a reset seperate from the clock reset and jump inputs to color because
@@ -20,12 +27,17 @@ module vga2practice(CLK_50, VGA_R, VGA_B, VGA_G, VGA_HS, VGA_VS, VGA_SYNC_N, VGA
     assign VGA_SYNC_N = 1'b0;
 
 endmodule 
-
+//The color module controls the picture displayed. It uses the fact that the picture is drawn by moving
+//in lines from left to right and then going down rows to trace them left to right once a line is done.
 module color(rst, clk, jump, r, b, g);
    input clk, rst, jump;
+   //r,b,g control the amount of red, green, or blue contributed through the VGA
    output [7:0] r, b, g;
 	reg [7:0] r, b, g;
+	
+	//col refers to the horizontal location on the screen from left to right
 	reg [31:0] col = 32'd0;
+	//row refers to the vertical location on the screen from top to bottom
 	reg [31:0] row = 32'd0;
 	
 	// Changes to the lower row if it reaches the end of elements on that row
@@ -59,7 +71,12 @@ module color(rst, clk, jump, r, b, g);
 	parameter play = 1;
 	parameter finish = 0;
 	
+	//bird is the blue square that the player controls
+	//we declare birdx here because its horizontal location is constant throughout the game
 	wire birdx = (col > 80 && col < 121);
+	
+	//these are the bars that moce across the screen
+	//the y values of the individual bars do not change so we declare them here
 	wire bary = ((row > 24 && row < 400) || row > 700);
 	wire bary2 = ((row > 24 && row < 500) || row > 800);
 	wire bary3 = ((row > 24 && row < 300) || row > 600);
@@ -69,12 +86,22 @@ module color(rst, clk, jump, r, b, g);
 	wire bary7 = ((row > 24 && row < 550) || row > 850);
 	reg birdy, barx, barx2, barx3, barx4, barx5, barx6, barx7;
 	
+	
+	//these integers are changing
+	// i and j are the y values of the blue box
 	integer i = 512;
 	integer j = 553;
 	
+	//d and e represent the x values of the bars and the numbers of d and e
+	//variables go with the corresponding number of bar
 	integer d = 1231;
 	integer e = 1281;
+	
+	//this controls the bar speed across the screen. each time the clock counts to 290000
+	//the bar location moves 5 to the left
 	integer barspeed = -5;
+	
+	//this controls the clock speed
 	integer refreshrate = 2900000;
 	integer d2, e2, d3, e3, d4, e4, d5, e5, d6, e6, d7, e7, accl, tally;
 	
@@ -87,12 +114,15 @@ module color(rst, clk, jump, r, b, g);
 		case (state)  
 			play: begin
 				if(rst == 1)begin
+					//these are the initial locations of the objects on the screen
 					i <= 512;
 					j <= 553;
 					
 					d <= 1231;
 					e <= 1281;
 					
+					//the next bars have an initial location on the screen but 
+					//only become visible when it is their turn
 					d2 <= 1231;
 					e2 <= 1281;
 					
@@ -138,6 +168,7 @@ module color(rst, clk, jump, r, b, g);
 				else if(barx && bary) begin
 					color <= black;
 				end
+				//count_bars controls how many bars are visible on the screen
 				else if(barx2 && bary2 && count_bars >= 1) begin
 					color <= black;
 				end
@@ -156,7 +187,10 @@ module color(rst, clk, jump, r, b, g);
 				else if(barx7 && bary7 && count_bars >= 6) begin
 					color <= black;
 				end
+				//provides a border of black around the screen for cleanliness
 				else if(row < 25 || row > 1000 || col < 40 || col > 1230) begin
+							//the score displayed at the top left of the screen
+							//if the leftmost bar goes through one cycle it adds a tally
 							if((col > 10 && col < (11 + score)) && row > 3 && row < 20) begin 
 								color <= red;
 								if(score >= 200) begin
@@ -213,8 +247,10 @@ module color(rst, clk, jump, r, b, g);
 						count4 <= count4 + 1;
 				end
 				
+				//bars 2 through 7
 				if (count_bars >= 1) begin
 					if (bartimer >= refreshrate)begin
+						//update the d and e (x-coordinate) values so they move left
 						d2 <= d2 + barspeed;
 						e2 <= e2 + barspeed;
 						bartimer <= 0;
@@ -293,46 +329,54 @@ module color(rst, clk, jump, r, b, g);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 				
 				// Game over when you go out of bounds or hit a bar
+				//if the box goes out of bounds
 				if (i < 25 || j > 1000)begin
 					state <= finish;
 				end
 				
+				//if it hits the first bar
 				if (d > 40 && d < 121)begin
 					if (i < 400 || j > 700) begin
 						state <= finish;
 					end
 				end
 				
+				//hits the second bar
 				if (d2 > 40 && d2 < 121)begin
 					if (i < 500 || j > 800) begin
 						state <= finish;
 					end
 				end
 				
+				//hits the third bar
 				if (d3 > 40 && d3 < 121)begin
 					if (i < 300 || j > 600) begin
 						state <= finish;
 					end
 				end
-					
+				
+				//hits the fourth bar	
 				if (d4 > 40 && d4 < 121)begin
 					if (i < 450 || j > 750) begin
 						state <= finish;
 					end
 				end
-					
+				
+				//hits the fifth bar	
 				if (d5 > 40 && d5 < 121)begin
 					if (i < 500 || j > 800) begin
 						state <= finish;
 					end
 				end
-					
+				
+				//hits the sixth bar	
 				if (d6 > 40 && d6 < 121)begin
 					if (i < 350 || j > 650) begin
 						state <= finish;
 					end
 				end
-					
+				
+				//hits the seventh bar	
 				if (d7 > 40 && d7 < 121)begin
 					if (i < 550 || j > 850) begin
 						state <= finish;
@@ -341,11 +385,12 @@ module color(rst, clk, jump, r, b, g);
 			end
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
 			
-			// Game over red screen of death
+			// Game over, red screen of death
 			finish: 	begin 
 				if (rst == 1)begin
 					state <= play;
 				end
+				//show the final score
 				else if(col > 300 && col < (301 + tally*10) && row > 450 && row < 550) begin
 					if(col%10 == 0 || col%10-1 == 0)
 						color <= red;
@@ -385,6 +430,7 @@ module color(rst, clk, jump, r, b, g);
 		endcase
 	end
 endmodule
+
 
 module H_SYNC(clk, hout, bout, newLine);
 
