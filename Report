@@ -1,0 +1,32 @@
+Introduction
+For our project for ECE 287 Digital Systems Analysis we decided to create a basic version of flappy bird using the DE2-115 board and the VGA monitor.The concept of the game is that a blue box has to move in between vertical bars that move across the screen. When the user presses a button the box jumps up, if nothing is pressed it falls at a rate that mimics gravity. When the box hits a bar of an edge of the screen, the game is over. 
+ 
+Background Information
+We had heard that getting anything to show up onto the monitor would be one of the most difficult parts of it, and we realized that it would be tricky to configure the moving boxes and the physics of the box. We spent a week reading articles about how the display on the monitor works. Once we were familiar with how the code should work we were able to start the code. 
+Another problem we knew we would encounter was the rules of the game: if the blue box hits a black bar, the game is over. This logic took some thinking through but we were able to use if statements comparing the coordinates of the box and bars to determine if the game should end.
+
+Description
+VGA
+For the VGA output we looked at Bailey Hall’s code and the code from the MIT students’ project. The hardest concept we  encountered was the horizontal and vertical synchronization. We understood the concepts but could not get the code to compile. We then spoke to Bailey Hall who sat with us and helped us with the synchronizations. Another problem we had was that the screen was scrolling uncontrollably. This is because we had the dimensions too large. We calculated what the dimensions of the screen should have been but were not exact so we had to use trial and error to find the perfect dimensions of the screen. 
+
+Shapes
+We used if statements inside our color method to draw the shapes. For each, the logic was that if x was between two values and y was in between two values, fill it in with a color that wasn’t the same as the background. If the part of the screen wasn’t in between the specified x’s and y’s then it was left white.
+
+Movement
+The movement was easier to do than we had expected. For the blue box we set the x-values to permanent values and made the       y-values add an element each time the internal clock ticked a certain amount of time, which would lower the box down the screen because in terms of y coordinates the top of the screen is 0 and the more it increases the lower it gets. To account for the acceleration of gravity we made it so that the element added each interval was also increasing each interval, so each set more elements were added than previously. To make the box jump we made it so that the element that was added was negative, then after the button is let go the elements starts increasing again until its pressed again. For the bars moving across the screen we initiated each of their y-values and made the x-values reg. We made them subtract a certain amount over time so their location would move closer to the origin, or the left side of the screen.
+
+
+Collision
+We used if statements to say that if the blue box’s x and y variables were inside the same space as the bars’ x and y section, the game ends, which would call a red screen with the score in black.
+
+
+Score
+The score was easy to put into the game. We started off with a simple increasing box to symbolize time passing. Then we made it so that after a set amount of time the box would reset and a tally mark would be made. The tally was hard to get because of the black spaces in between the red rectangles. We started out with just a rectangle increasing by blocks at a time, then tried to make individual black bars in the middle of the blocks to separate them into individual tallies, but that was more difficult to do than we thought. So we made it so that within each block of 10 pixels the last 2 were black. We did this by using an if statement and the modulus operation to determine the 9th and 10th columns of pixels and made them black, then we made the rest red.
+
+Conclusion
+The game was a success and we learned an immense amount in a few short weeks. We learned about how to use the FPGA and VGAfunctioning as well as when it is important to ask for help or take breaks. We worked really well as a partnership, dividing work evenly among us and trying to be in the lab together as much as possible. Since we approached some problems in different ways it was interesting to try what worked best. Our project is a success and our code is easy to follow and understand.
+
+Citations:
+Bailey Hall 
+Asteroid Game by MIT students:
+http://web.mit.edu/6.111/www/f2005/projects/jrv23_Project_Final_Report.pdf 
